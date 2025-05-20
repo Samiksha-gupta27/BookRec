@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="book-details">
+    <div class="book-header">
+        <img src="{{ book.cover.large if book.cover else '/static/no-cover.png' }}" 
+             alt="{{ book.title }}" 
+             class="book-cover-large">
+        
+        <div class="book-info">
+            <h1>{{ book.title }}</h1>
+            <p class="author">
+                by {{ book.authors[0].name if book.authors else 'Unknown author' }}
+            </p>
+            
+            
+            {% if book.publish_date %}
+            <p><strong>Published:</strong> {{ book.publish_date }}</p>
+            {% endif %}
+            
+            {% if book.number_of_pages %}
+            <p><strong>Pages:</strong> {{ book.number_of_pages }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="book-description">
+        <h2>Description</h2>
+        {% if book.description %}
+            {% if book.description.value %}
+                <p>{{ book.description.value }}</p>
+            {% else %}
+                <p>{{ book.description }}</p>
+            {% endif %}
+        {% else %}
+            <p>No description available.</p>
+        {% endif %}
+    </div>
+
+
+<div class="reviews">
+    {% for review in reviews %}
+    <div class="review-card">
+        <h4>{{ book.title }}</h4>
+        <div class="rating">
+            {% for i in range(1,6) %}
+                <span class="star {% if i <= review.rating %}filled{% endif %}">★</span>
+            {% endfor %}
+        </div>
+        <p class="review-text">{{ review.comment }}</p>
+        <small class="review-meta">
+            By {{ review.username }} on {{ review.date.strftime('%b %d, %Y') }}
+        </small>
+
+        {% if review.username == current_user.username %}
+        <div class="review-actions">
+            <button onclick="toggleEditForm({{ 'review.review_id' }})" 
+                    class="btn-edit">Edit</button>
+                    
+            <form method="POST" action="{{ url_for('delete_review') }}" 
+                  onsubmit="return confirm('Delete this review?')">
+                <input type="hidden" name="review_id" value="{{ review.review_id }}">
+                <input type="hidden" name="isbn" value="{{ book.isbn }}">
+                <button type="submit" class="btn-delete">Delete</button>
+            </form>
+        </div>
+
+        <div id="edit-form-{{ review.review_id }}" class="edit-form" style="display:none;">
+            <form method="POST" action="{{ url_for('edit_review') }}">
+                <input type="hidden" name="review_id" value="{{ review.review_id }}">
+                <input type="hidden" name="isbn" value="{{ book.isbn }}">
+                
+                <div class="form-group">
+                    <label>Rating:</label>
+                    <select name="rating" required>
+                        {% for i in range(1,6) %}
+                            <option value="{{ i }}" {% if i == review.rating %}selected{% endif %}>
+                                {{ i }} Star{% if i > 1 %}s{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <textarea name="comment" required>{{ review.comment }}</textarea>
+                </div>
+                
+                <button type="submit">Save</button>
+                <button type="button" onclick="toggleEditForm({{ review.review_id }})">
+                    Cancel
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+
+<!-- Save for Later Button -->
+<form method="POST" action="{{ url_for('save_book') }}" style="margin-top: 20px;">
+    <input type="hidden" name="isbn" value="{{ book.isbn }}">
+    {% if saved %}
+        <input type="hidden" name="action" value="remove">
+        <button type="submit" class="btn btn-warning">Remove from Saved</button>
+    {% else %}
+        <input type="hidden" name="action" value="save">
+        <button type="submit" class="btn btn-success">Save for Later</button>
+    {% endif %}
+</form>
+        
+
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const isbn = '{{ book.isbn }}';
+    
+    // Load reviews
+    await loadReviews(isbn);
+    
+    // Set up save button
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.addEventListener('click', async () => {
+        const action = saveBtn.textContent.includes('Remove') ? 'remove' : 'save';
+        const response = await BookStorage.saveBook(isbn, action);
+        
+        if (response.status === 'success') {
+            saveBtn.textContent = action === 'save' ? 'Remove from List' : 'Save to Read Later';
+            saveBtn.classList.toggle('btn-primary');
+            saveBtn.classList.toggle('btn-outline');
+            showAlert(`Book ${action === 'save' ? 'saved to' : 'removed from'} your reading list`);
+        }
+    });
+    
+    // Set up review form
+    const reviewForm = document.getElementById('review-form');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const rating = document.getElementById('review-rating').value;
+            const comment = document.getElementById('review-text').value;
+            
+            const response = await BookStorage.submitReview(isbn, rating, comment);
+            if (response.status === 'success') {
+                showAlert('Review submitted successfully!');
+                reviewForm.reset();
+                await loadReviews(isbn);
+            } else {
+                showAlert(response.message || 'Error submitting review', 'error');
+            }
+        });
+    }
+});
+
+async function loadReviews(isbn) {
+    const container = document.getElementById('reviews-container');
+    container.innerHTML = '<div class="skeleton-loader" style="height: 200px;"></div>';
+    
+    try {
+        const reviews = await BookStorage.getReviews(isbn);
+        
+        if (reviews.length === 0) {
+            container.innerHTML = '<p>No reviews yet. Be the first to review!</p>';
+            return;
+        }
+        
+        container.innerHTML = reviews.map(review => `
+            <div class="review-card">
+                <div class="review-header">
+                    <span class="review-author">${review.username}</span>
+                    <span class="review-date">${formatDate(review.date)}</span>
+                </div>
+                <div class="review-rating">
+                    ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                </div>
+                <p>${review.comment}</p>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+        container.innerHTML = '<p>Error loading reviews. Please try again.</p>';
+    }
+}
+function toggleEditForm(reviewId) {
+    const form = document.getElementById(`edit-form-${reviewId}`);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+
+<style>
+.book-details {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.book-header {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.book-cover-large {
+    width: 100%;
+    height: auto;
+    max-height: 450px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.book-info h1 {
+    font-family: 'Merriweather', serif;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.author {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.actions {
+    margin: 1.5rem 0;
+}
+
+.book-description {
+    margin: 3rem 0;
+    line-height: 1.8;
+}
+
+.book-reviews {
+    margin-top: 3rem;
+}
+
+.add-review {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+    .book-header {
+        grid-template-columns: 1fr;
+    }
+    
+    .book-cover-large {
+        max-height: 300px;
+    }
+}
+</style>
+{% endblock %}

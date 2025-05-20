@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>Welcome Back</h1>
+        <p>Log in to access your personalized recommendations</p>
+    </div>
+    
+    <div style="max-width: 500px; margin: 0 auto;">
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="form-group" style="display: flex; align-items: center;">
+                <input type="checkbox" class="form-control" id="remember" name="remember" style="width: auto; margin-right: 0.5rem;">
+                <label for="remember" style="margin-bottom: 0;">Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Log In</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 1.5rem;">Don't have an account? <a href="{{ url_for('signup') }}">Sign up here</a></p>
+    </div>
+{% endblock %}

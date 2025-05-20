@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="page-header">
+        <h1>Your Profile</h1>
+        <p>Manage your reading preferences and activity</p>
+    </div>
+    
+    <section class="preferences-section">
+        <h2>Your Preferences</h2>
+        {% if preferences %}
+            <div class="preferences-grid">
+                <div>
+                    <h3>Genres</h3>
+                    <ul>
+                        {% for genre in preferences.Genre %}
+                            <li>{{ genre }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <h3>Themes</h3>
+                    <ul>
+                        {% for theme in preferences.Theme %}
+                            <li>{{ theme }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <h3>Authors</h3>
+                    <ul>
+                        {% for author in preferences.Author %}
+                            <li>{{ author }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <p>You haven't set any preferences yet.</p>
+        {% endif %}
+        <a href="{{ url_for('preferences') }}" class="btn btn-outline">Edit Preferences</a>
+    </section>
+    
+    <section class="saved-books-section">
+        <h2>Your Reading List</h2>
+        <div id="saved-books-container" class="grid">
+            <!-- Books will be loaded here via JavaScript -->
+            <div class="skeleton-loader" style="height: 300px;"></div>
+        </div>
+    </section>
+    
+    <section class="reviews-section">
+        <h2>Your Reviews</h2>
+        <div id="user-reviews-container">
+            <!-- Reviews will be loaded here via JavaScript -->
+            <div class="skeleton-loader" style="height: 200px;"></div>
+        </div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSavedBooks();
+    await loadUserReviews();
+});
+
+async function loadSavedBooks() {
+    const container = document.getElementById('saved-books-container');
+    
+    try {
+        const savedBooks = await BookStorage.getSavedBooks();
+        
+        if (savedBooks.length === 0) {
+            container.innerHTML = '<p>Your reading list is empty. Save books to read later!</p>';
+            return;
+        }
+        
+        container.innerHTML = savedBooks.map(book => `
+            <div class="book-card">
+                <img src="${book.cover?.medium || '/static/no-cover.png'}" 
+                     alt="${book.title}" 
+                     class="book-cover">
+                <div class="book-card-body">
+                    <h3 class="book-title">${book.title}</h3>
+                    <p class="book-author">
+                        ${book.authors?.[0]?.name || 'Unknown author'}
+                    </p>
+                    <a href="/book/${book.isbn}" class="btn btn-primary">View Details</a>
+                    <button onclick="removeFromList('${book.isbn}')" 
+                            class="btn btn-outline" 
+                            style="margin-top: 0.5rem;">
+                        Remove
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading saved books:', error);
+        container.innerHTML = '<p>Error loading your reading list. Please try again.</p>';
+    }
+}
+
+async function loadUserReviews() {
+    const container = document.getElementById('user-reviews-container');
+    
+    try {
+        // Get all reviews from the database
+        const response = await fetch('/api/user/reviews');
+        const reviews = await response.json();
+        
+        if (reviews.length === 0) {
+            container.innerHTML = '<p>You haven\'t reviewed any books yet.</p>';
+            return;
+        }
+        
+        container.innerHTML = reviews.map(review => `
+            <div class="review-card">
+                <div class="review-header">
+                    <a href="/book/${review.isbn}" class="review-book-title">
+                        ${review.book_title || 'Untitled Book'}
+                    </a>
+                    <span class="review-date">${formatDate(review.date)}</span>
+                </div>
+                <div class="review-rating">
+                    ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                </div>
+                <p>${review.comment}</p>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading user reviews:', error);
+        container.innerHTML = '<p>Error loading your reviews. Please try again.</p>';
+    }
+}
+
+async function removeFromList(isbn) {
+    const response = await BookStorage.saveBook(isbn, 'remove');
+    if (response.status === 'success') {
+        showAlert('Book removed from your reading list');
+        await loadSavedBooks();
+    }
+}
+</script>
+
+<style>
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.preferences-section {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.preferences-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin: 1.5rem 0;
+}
+
+.preferences-grid ul {
+    list-style: none;
+}
+
+.preferences-grid li {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.saved-books-section,
+.reviews-section {
+    margin: 3rem 0;
+}
+
+.review-book-title {
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.review-book-title:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

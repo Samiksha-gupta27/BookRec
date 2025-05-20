@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Your Preferences{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>Your Reading Preferences</h1>
+        <p>Tell us what you like to get better recommendations</p>
+    </div>
+    
+    <div style="max-width: 800px; margin: 0 auto;">
+        <form method="POST" action="{{ url_for('preferences') }}">
+            <div style="margin-bottom: 2rem;">
+                <h2 style="margin-bottom: 1rem;">Favorite Genres</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem;">
+                    {% for genre in genres %}
+                        <div class="form-group" style="display: flex; align-items: center;">
+                            <input type="checkbox" id="genre-{{ loop.index }}" name="genres" value="{{ genre }}" 
+                                   {% if genre in user_prefs.Genre %}checked{% endif %} style="margin-right: 0.5rem;">
+                            <label for="genre-{{ loop.index }}" style="margin-bottom: 0;">{{ genre }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <h2 style="margin-bottom: 1rem;">Favorite Themes</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem;">
+                    {% for theme in themes %}
+                        <div class="form-group" style="display: flex; align-items: center;">
+                            <input type="checkbox" id="theme-{{ loop.index }}" name="themes" value="{{ theme }}"
+                                   {% if theme in user_prefs.Theme %}checked{% endif %} style="margin-right: 0.5rem;">
+                            <label for="theme-{{ loop.index }}" style="margin-bottom: 0;">{{ theme }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <h2 style="margin-bottom: 1rem;">Favorite Authors</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem;">
+                    {% for author in authors %}
+                        <div class="form-group" style="display: flex; align-items: center;">
+                            <input type="checkbox" id="author-{{ loop.index }}" name="authors" value="{{ author }}"
+                                   {% if author in user_prefs.Author %}checked{% endif %} style="margin-right: 0.5rem;">
+                            <label for="author-{{ loop.index }}" style="margin-bottom: 0;">{{ author }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Save Preferences</button>
+        </form>
+    </div>
+{% endblock %}
