@@ -136,7 +136,6 @@ def get_trending_books():
     except requests.RequestException:
         return []
 
-# Recommendation Engine
 def get_recommendations(user_id):
     print(f"\n[DEBUG] Starting recommendations for user: {user_id}")
     try:
@@ -168,7 +167,6 @@ def get_recommendations(user_id):
         excluded = set(interacted['saved'] + interacted['reviewed'])
         print(f"[DEBUG] Excluded ISBNs: {excluded}")
 
-        # 3. Build query parts from preferences
         query_parts = []
         for pref in prefs:
             if pref['type'] == 'Author':
@@ -177,7 +175,7 @@ def get_recommendations(user_id):
                 query_parts.append(f"subject:\"{pref['name']}\"")
         print(f"[DEBUG] Search queries: {query_parts}")
 
-        # [Rest of the function remains the same...]
+        
         results = []
         seen_identifiers = set()
 
@@ -496,8 +494,7 @@ def profile():
         ).single()['saved_books'] or []
         
         # Process data
-       # In your profile() route, replace the preferences section with:
-        prefs = {'Genre': [], 'Author': [], 'Theme': []}  # Added 'Theme'
+        prefs = {'Genre': [], 'Author': [], 'Theme': []} 
         for pref in preferences:
             pref_type = pref['type']
             # Handle both old and new preference types
@@ -537,7 +534,7 @@ def preferences():
     if request.method == 'POST':
         genres = request.form.getlist('genres')
         authors = request.form.getlist('authors')
-        themes = request.form.getlist('themes')  # Added themes
+        themes = request.form.getlist('themes')  
         
         with driver.session() as session:
             # Clear existing preferences
@@ -576,7 +573,7 @@ def preferences():
                 )
             
             # Add new theme preferences
-            for theme in themes:  # Added theme handling
+            for theme in themes:  
                 session.run(
                     """
                     MERGE (t:Theme {name: $theme})

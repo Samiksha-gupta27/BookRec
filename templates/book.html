@@ -39,65 +39,45 @@
         {% endif %}
     </div>
 
+<div class="book-container">
+    <!-- Book details section -->
+    <div class="book-header">
+        <h1>{{ book.title }}</h1>
+        <p class="author">
+            by {{ book.authors[0].name if book.authors else 'Unknown author' }}
+        </p>
+    </div>
 
-<div class="reviews">
-    {% for review in reviews %}
-    <div class="review-card">
-        <h4>{{ book.title }}</h4>
-        <div class="rating">
-            {% for i in range(1,6) %}
-                <span class="star {% if i <= review.rating %}filled{% endif %}">★</span>
-            {% endfor %}
-        </div>
-        <p class="review-text">{{ review.comment }}</p>
-        <small class="review-meta">
-            By {{ review.username }} on {{ review.date.strftime('%b %d, %Y') }}
-        </small>
-
-        {% if review.username == current_user.username %}
-        <div class="review-actions">
-            <button onclick="toggleEditForm({{ 'review.review_id' }})" 
-                    class="btn-edit">Edit</button>
+    <!-- Reviews section -->
+    <div class="reviews-section">
+        <h2>Reviews</h2>
+        
+        {% if reviews %}
+            <div class="reviews-list">
+                {% for review in reviews %}
+                <div class="review-card">
+                    <div class="review-header">
+                        <span class="reviewer">{{ review.username }}</span>
+                        <span class="review-date">
+                            {{ review.date.strftime('%B %d, %Y') }}
+                        </span>
+                    </div>
                     
-            <form method="POST" action="{{ url_for('delete_review') }}" 
-                  onsubmit="return confirm('Delete this review?')">
-                <input type="hidden" name="review_id" value="{{ review.review_id }}">
-                <input type="hidden" name="isbn" value="{{ book.isbn }}">
-                <button type="submit" class="btn-delete">Delete</button>
-            </form>
-        </div>
-
-        <div id="edit-form-{{ review.review_id }}" class="edit-form" style="display:none;">
-            <form method="POST" action="{{ url_for('edit_review') }}">
-                <input type="hidden" name="review_id" value="{{ review.review_id }}">
-                <input type="hidden" name="isbn" value="{{ book.isbn }}">
-                
-                <div class="form-group">
-                    <label>Rating:</label>
-                    <select name="rating" required>
+                    <div class="review-rating">
                         {% for i in range(1,6) %}
-                            <option value="{{ i }}" {% if i == review.rating %}selected{% endif %}>
-                                {{ i }} Star{% if i > 1 %}s{% endif %}
-                            </option>
+                            <span class="star {% if i <= review.rating %}filled{% endif %}">★</span>
                         {% endfor %}
-                    </select>
+                    </div>
+                    
+                    <p class="review-text">{{ review.comment }}</p>
                 </div>
-                
-                <div class="form-group">
-                    <textarea name="comment" required>{{ review.comment }}</textarea>
-                </div>
-                
-                <button type="submit">Save</button>
-                <button type="button" onclick="toggleEditForm({{ review.review_id }})">
-                    Cancel
-                </button>
-            </form>
-        </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-reviews">No reviews yet. Be the first to review!</p>
         {% endif %}
     </div>
-    {% endfor %}
 </div>
-
 
 <!-- Save for Later Button -->
 <form method="POST" action="{{ url_for('save_book') }}" style="margin-top: 20px;">
@@ -111,6 +91,29 @@
     {% endif %}
 </form>
         
+<div class="add-review">
+    <h3>Add Your Review</h3>
+    <form method="POST" action="{{ url_for('submit_review') }}">
+        <input type="hidden" name="isbn" value="{{ book.isbn }}">
+        
+        <div class="form-group">
+            <label>Rating:</label>
+            <select name="rating" required>
+                <option value="">Select rating</option>
+                {% for i in range(1,6) %}
+                    <option value="{{ i }}">{{ i }} Star{% if i > 1 %}s{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Review:</label>
+            <textarea name="comment" required></textarea>
+        </div>
+        
+        <button type="submit">Submit Review</button>
+    </form>
+</div>
 
 
 <script>

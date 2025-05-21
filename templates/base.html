@@ -338,6 +338,55 @@
     border: 1px solid #ddd;
     border-radius: 5px;
 }
+/* Reviews section styling */
+.reviews-section {
+    margin-top: 40px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.reviews-list {
+    margin-top: 20px;
+}
+
+.review-card {
+    padding: 15px;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.review-rating {
+    color: #ffc107;
+    font-size: 1.2em;
+    margin: 5px 0;
+}
+
+.star.filled {
+    color: #ff9800;
+}
+
+.review-text {
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.no-reviews {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -376,7 +425,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2023 BookRec. All rights reserved.</p>
+            <p> BookRec</p>
         </div>
     </footer>
 
