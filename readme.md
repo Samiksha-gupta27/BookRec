@@ -13,8 +13,8 @@ A Flask-based web application that provides personalized book recommendations us
 ## Installation
 
 1. Clone the repository:
-   git clone https://github.com/yourusername/book-recommendation-system.git
-   cd book-recommendation-system
+   git clone https://github.com/Samiksha-gupta27/BookRec.git
+   cd BookRec
 
 2. Set up virtual environment:
 
