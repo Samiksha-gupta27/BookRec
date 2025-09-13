@@ -4,11 +4,11 @@ A Flask-based web application that provides personalized book recommendations us
 
 ## Features
 
-- 📚 Personalized book recommendations
-- 🔐 User authentication (login/signup)
-- 💾 Save books to reading list
-- ✏️ Add and manage reviews
-- ⚙️ Preference-based recommendations
+- Personalized book recommendations
+- User authentication (login/signup)
+- Save books to reading list
+- Add and manage reviews
+- Preference-based recommendations
 
 ## Installation
 
